@@ -46,10 +46,13 @@ class Scanner {
     List<Token> scanTokens()
     {
         // loop over each character to make lexemes
-        while(!isEOF()){
+        while (!isEOF()) {
             start = current;
             scanToken();
         }
+
+        tokens.add(new Token(EOF, "", null, line));
+        
         return tokens;
     }
 

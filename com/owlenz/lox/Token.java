@@ -1,10 +1,10 @@
 package com.owlenz.lox;
 
 class Token {
-    private TokenType type;
-    private String lexeme;
-    private int line;
-    private Object literal;
+    TokenType type;
+    String lexeme;
+    int line;
+    Object literal;
 
     Token(TokenType type, String lexeme, Object literal, int line)
     {
