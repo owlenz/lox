@@ -109,7 +109,9 @@ class Scanner {
         case ':': addToken(COLON); break;
 
         case '*': addToken(STAR); break;
-        case '+': addToken(PLUS); break;
+        case '+':
+            addToken(match('+') ? PLUS_PLUS : PLUS);
+            break;
         case '-': addToken(MINUS); break;
         case '=':
             addToken(match('=') ? EQUAL_EQUAL : EQUAL);

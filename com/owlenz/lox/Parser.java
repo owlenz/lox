@@ -1,5 +1,6 @@
 package com.owlenz.lox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Parser {
@@ -10,6 +11,8 @@ public class Parser {
     private int it = 0;
     boolean err = false;
 
+    List<Boolean> ter_open = new ArrayList<Boolean>();
+    private int ter_it = 0;
     Parser(List<Token> tokens) {
         this.tokens = tokens;
     }
@@ -20,24 +23,6 @@ public class Parser {
         } catch (ParseError err) {
             return null;
         }
-    }
-
-    public Expr expression() {
-        return equality();
-    }
-
-    private Expr equality() {
-        Expr expr = comparison();
-
-        while (match(TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL)) {
-            Token op = tokens.get(it - 1);
-            expr = new Expr.Binary(
-                    expr,
-                    op,
-                    comparison());
-        }
-
-        return expr;
     }
 
     Token currentToken() {
@@ -62,6 +47,46 @@ public class Parser {
         return currentToken().type == TokenType.EOF;
     }
 
+    public Expr expression() {
+        return comma();
+    }
+
+    public Expr comma(){
+        Expr expr = ternary();
+
+        while(match(TokenType.COMMA)){
+            expr = ternary();
+        }
+        return expr;
+    }
+
+    private Expr ternary() {
+        Expr expr = equality();
+
+        // while (match(TokenType.Q_MARK)) {
+        //     ter_open.set(ter_it++, true);
+        //     Token op = tokens.get(it - 1);
+        //     expr = new Expr.Ternary(
+        //             expr,
+        //             op,
+        //             ternary());
+        // }
+        return expr;
+    }
+
+    private Expr equality() {
+        Expr expr = comparison();
+
+        while (match(TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL)) {
+            Token op = tokens.get(it - 1);
+            expr = new Expr.Binary(
+                    expr,
+                    op,
+                    comparison());
+        }
+
+        return expr;
+    }
 
     private Expr comparison() {
         Expr expr = term();
@@ -81,8 +106,7 @@ public class Parser {
     private Expr term() {
         Expr expr = factor();
 
-        while (match(TokenType.PLUS, TokenType.MINUS)) {
-            System.out.printf("test\n");
+        while (match(TokenType.PLUS, TokenType.PLUS_PLUS, TokenType.MINUS)) {
             Token op = tokens.get(it - 1);
 
             expr = new Expr.Binary(
@@ -126,9 +150,7 @@ public class Parser {
         if(match(TokenType.TRUE))
             return new Expr.Literal(true);
 
-        System.out.printf("token %s\n", currentToken());
         if (match(TokenType.NUMBER, TokenType.STRING)) {
-            System.out.printf("matched string or number: %s\n", tokens.get(it-1).toString());
             return new Expr.Literal(tokens.get(it - 1).literal);
         }
 
@@ -142,6 +164,11 @@ public class Parser {
             advance();
             return new Expr.Paren(expr);
         }
+
+        if(match(TokenType.COMMA)){
+            Expr expr = expression();
+        }
+        
         throw error("Expect Expression\n", currentToken());
     }
 
@@ -156,28 +183,27 @@ public class Parser {
     }
 
     private void synchronize() {
-        advance(); 
+        advance();
         // look for statement closure
         while (!isEOF()) {
             if (previous().type == TokenType.SEMI)
                 return;
 
             switch (currentToken().type) {
-            case TokenType.CLASS:
-            case TokenType.IF:
-            case TokenType.FOR:
-            case TokenType.ELSE:
-            case TokenType.WHILE:
-            case TokenType.PRINT:
-            case TokenType.FUN:
-            case TokenType.VAR:
-            case TokenType.RETURN:
-                return;
-            default:
-                advance();
+                case TokenType.CLASS:
+                case TokenType.IF:
+                case TokenType.FOR:
+                case TokenType.ELSE:
+                case TokenType.WHILE:
+                case TokenType.PRINT:
+                case TokenType.FUN:
+                case TokenType.VAR:
+                case TokenType.RETURN:
+                    return;
+                default:
+                    advance();
             }
         }
-
 
     }
 

@@ -51,7 +51,13 @@ public class Lox {
         Parser parser = new Parser(tokens);
         
         AstPrinter printer = new AstPrinter();
-        System.out.println(new AstPrinter().print(parser.parse()));
+        Expr exprAst = parser.parse();
+        // System.out.println(printer.print(exprAst));
+
+        Interpreter inter = new Interpreter();
+        Object val = inter.interpret(exprAst);
+        System.out.println(val);
+        
         // for (Token token : tokens) {
         //     System.out.println(token);
         // }
