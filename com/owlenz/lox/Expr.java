@@ -2,95 +2,101 @@ package com.owlenz.lox;
 
 abstract class Expr {
 
-    interface Visitor<R> {
-        R visitLiteral(Literal literal);
+	interface Visitor<R> {
+		R visitLiteral(Literal literal);
+		R visitVariable(Variable variable);
+		R visitUnary(Unary unary);
+		R visitBinary(Binary binary);
+		R visitAssignment(Assignment assignment);
+		R visitParen(Paren paren);
+	}
 
-        R visitUnary(Unary unary);
+	abstract <R> R accept(Visitor<R> visitor);
 
-        R visitBinary(Binary binary);
+	static class Literal extends Expr{
+		final Object value;
 
-        R visitParen(Paren paren);
+		Literal(Object value){
+			this.value = value;
+		}
 
-        // R visitTernary(Ternary ternary);
-    }
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitLiteral(this);
+		}
 
-    abstract <R> R accept(Visitor<R> visitor);
+	}
+	static class Variable extends Expr{
+		final Token name;
 
-    static class Literal extends Expr {
-        final Object value;
+		Variable(Token name){
+			this.name = name;
+		}
 
-        Literal(Object value) {
-            this.value = value;
-        }
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitVariable(this);
+		}
 
-        @Override
-        <R> R accept(Visitor<R> visitor) {
-            return visitor.visitLiteral(this);
-        }
+	}
+	static class Unary extends Expr{
+		final Token op;
+		final Expr exp;
 
-    }
+		Unary(Token op, Expr exp){
+			this.op = op;
+			this.exp = exp;
+		}
 
-    static class Unary extends Expr {
-        final Token op;
-        final Expr exp;
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitUnary(this);
+		}
 
-        Unary(Token operator, Expr exp) {
-            this.op = operator;
-            this.exp = exp;
-        }
+	}
+	static class Binary extends Expr{
+		final Expr left;
+		final Token op;
+		final Expr right;
 
-        @Override
-        <R> R accept(Visitor<R> visitor) {
-            return visitor.visitUnary(this);
-        }
+		Binary(Expr left, Token op, Expr right){
+			this.left = left;
+			this.op = op;
+			this.right = right;
+		}
 
-    }
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitBinary(this);
+		}
 
-    static class Binary extends Expr {
-        final Expr left;
-        final Token op;
-        final Expr right;
+	}
+	static class Assignment extends Expr{
+		final Token name;
+		final Expr exp;
 
-        Binary(Expr left, Token op, Expr right) {
-            this.left = left;
-            this.op = op;
-            this.right = right;
-        }
+		Assignment(Token name, Expr exp){
+			this.name = name;
+			this.exp = exp;
+		}
 
-        @Override
-        <R> R accept(Visitor<R> visitor) {
-            return visitor.visitBinary(this);
-        }
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitAssignment(this);
+		}
 
-    }
+	}
+	static class Paren extends Expr{
+		final Expr exp;
 
-    static class Paren extends Expr {
-        final Expr exp;
+		Paren(Expr exp){
+			this.exp = exp;
+		}
 
-        Paren(Expr exp) {
-            this.exp = exp;
-        }
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitParen(this);
+		}
 
-        @Override
-        <R> R accept(Visitor<R> visitor) {
-            return visitor.visitParen(this);
-        }
-    }
-
-    // static class Ternary extends Expr {
-    //     final Expr left;
-    //     final Token op;
-    //     final Expr right;
-
-    //     Ternary(Expr left, Token op, Expr right) {
-    //         this.left = left;
-    //         this.op = op;
-    //         this.right = right;
-    //     }
-
-    //     @Override
-    //     <R> R accept(Visitor<R> visitor) {
-    //         return visitor.visitTernary(this);
-    //     }
-    // }
+	}
 }

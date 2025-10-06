@@ -33,4 +33,16 @@ class AstPrinter implements Expr.Visitor<String> {
         return "(grouped " + expr.exp.accept(this) + ")";
     }
 
+    @Override
+    public String visitVariable(Expr.Variable variable) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitVariable'");
+    }
+
+    @Override
+    public String visitAssignment(Expr.Assignment assignment) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitAssignment'");
+    }
+
 }

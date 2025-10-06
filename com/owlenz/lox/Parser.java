@@ -17,12 +17,16 @@ public class Parser {
         this.tokens = tokens;
     }
 
-    Expr parse() {
-        try {
-            return expression();
-        } catch (ParseError err) {
-            return null;
+    List<Stmt> parse() {
+        List<Stmt> statements = new ArrayList<Stmt>();
+        while (!isEOF()) {
+            try {
+                statements.add(declaration());
+            } catch (ParseError err) {
+                return null;
+            }
         }
+        return statements;
     }
 
     Token currentToken() {
@@ -43,8 +47,52 @@ public class Parser {
         }
         return false;
     }
+
     private boolean isEOF() {
         return currentToken().type == TokenType.EOF;
+    }
+
+    public Stmt declaration() {
+        try {
+            if (match(TokenType.VAR)) {
+                return variable();
+            } else {
+                return statement();
+            }
+        } catch (ParseError err) {
+            synchronize();
+            return null;
+        }
+    }
+
+
+    public Stmt variable() {
+        Token name = consume(TokenType.IDENTIFIER, "Expected a variable name");
+        Expr expression = null;
+        if (match(TokenType.EQUAL)) {
+            expression = expression();
+        }
+        consume(TokenType.SEMI, "Expect ; after statement");
+        return new Stmt.Variable(name, expression);
+    }
+
+    public Stmt statement() {
+        if (match(TokenType.PRINT)) {
+            return printStmt();
+        }
+        return exprStmt();
+    }
+
+    public Stmt printStmt() {
+        Expr exp = expression();
+        consume(TokenType.SEMI, "Expect ; after statement");
+        return new Stmt.Print(exp);
+    }
+
+    public Stmt exprStmt(){
+        Expr exp = expression();
+        consume(TokenType.SEMI, "Expect ; after statement");
+        return new Stmt.Expression(exp); 
     }
 
     public Expr expression() {
@@ -61,7 +109,7 @@ public class Parser {
     }
 
     private Expr ternary() {
-        Expr expr = equality();
+        Expr expr = assignment();
 
         // while (match(TokenType.Q_MARK)) {
         //     ter_open.set(ter_it++, true);
@@ -72,6 +120,17 @@ public class Parser {
         //             ternary());
         // }
         return expr;
+    }
+
+    private Expr assignment() {
+        // if (match(TokenType.IDENTIFIER) && match(TokenType.EQUAL)) {
+        //     Token token = tokens.get(it-2);
+        //     System.out.println(token.toString());
+        //     // consume(TokenType.EQUAL, "Missing equal");
+        //     Expr expr = new Expr.Assignment(token, assignment());
+        //     return expr;
+        // }
+        return equality();
     }
 
     private Expr equality() {
@@ -151,7 +210,11 @@ public class Parser {
             return new Expr.Literal(true);
 
         if (match(TokenType.NUMBER, TokenType.STRING)) {
-            return new Expr.Literal(tokens.get(it - 1).literal);
+            return new Expr.Literal(previous().literal);
+        }
+
+        if (match(TokenType.IDENTIFIER)) {
+            return new Expr.Variable(previous());
         }
 
         if (match(TokenType.LEFT_PARE)) {
@@ -173,7 +236,8 @@ public class Parser {
     }
 
     private Token consume(TokenType token, String message) throws ParseError {
-        if (match(TokenType.RIGHT_PARE)) {
+        if (match(token)) {
+            return previous();
         }
         throw error(message, currentToken());
     }

@@ -8,27 +8,35 @@ import java.util.ArrayList;
 
 public class GenerateAst {
     public static void main() throws IOException {
-        List<String> rules = new ArrayList<String>(
+        List<String> rulesExpr = new ArrayList<String>(
                 Arrays.asList(
-                        "Literal : Object value",
-                        "Unary   : Token operator, Expr exp",
-                        "Binary  : Expr exp, Token op, Expr exp1",
-                        "Paren   : Expr exp"));
-        generateExpr(rules);
+                        "Literal    : Object value",
+                        "Variable   : Token name",
+                        "Unary      : Token op, Expr exp",
+                        "Binary     : Expr left, Token op, Expr right",
+                        "Assignment : Token name, Expr exp",
+                        "Paren      : Expr exp"));
+
+        List<String> rulesStmt = new ArrayList<String>(
+                Arrays.asList(
+                        "Expression    : Expr exp",
+                        "Variable      : Token name, Expr init",
+                        "varExpression : Expr exp",
+                        "Print         : Expr exp"));
+
+        generateAst("Expr", rulesExpr);
+        generateAst("Stmt", rulesStmt);
     };
 
-    private static void generateExpr(List<String> rules) throws IOException {
+    private static void generateAst(String name, List<String> rules) throws IOException {
 
-        String path = "./com/owlenz/lox/Expr.java";
+        String path = "./com/owlenz/lox/" + name + ".java";
         PrintWriter writer = new PrintWriter(path, "UTF-8");
         writer.printf("package com.owlenz.lox;\n\n");
 
         // writer.printf("\n\n");
 
-
-
-        writer.printf("abstract class Expr {\n\n");
-
+        writer.printf("abstract class %s {\n\n", name);
 
         writer.printf("\tinterface Visitor<R> {\n");
         for (String rule : rules) {
@@ -43,7 +51,7 @@ public class GenerateAst {
             String para = rule.split(":")[1].trim();
             String vars[] = para.split(",");
 
-            writer.printf("\tstatic class %s extends Expr{\n", ruleName);
+            writer.printf("\tstatic class %s extends %s{\n", ruleName, name);
 
             for (String var : vars) {
                 writer.printf("\t\tfinal %s;\n", var.trim());

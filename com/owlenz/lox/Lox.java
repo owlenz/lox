@@ -9,7 +9,10 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class Lox {
+    private static Interpreter inter = new Interpreter();
     static boolean hadError = false;
+    static boolean hadRuntimeError = false;
+    static int exitCode = 0;
 
     public static void main(String[] args) throws IOException {
         if (args.length > 1) {
@@ -17,7 +20,6 @@ public class Lox {
             System.exit(64);
         } else if (args.length == 1) {
             readFile(args[0]);
-            System.exit(0);
         } else {
             repl();
         }
@@ -27,9 +29,14 @@ public class Lox {
         byte[] Bytes = Files.readAllBytes(Paths.get(path));
         run(new String(Bytes, Charset.defaultCharset()));
 
-        if (hadError) {
+        if (hadError) 
             System.exit(65);
-        }
+        if(hadRuntimeError)
+            if (exitCode > 0)
+                System.exit(exitCode);
+            else
+                System.exit(70);
+
     }
 
     private static void repl() throws IOException {
@@ -44,37 +51,43 @@ public class Lox {
         }
     }
 
+    private static void printAst(Expr exprAst) {
+        AstPrinter printer = new AstPrinter();
+        System.out.println(printer.print(exprAst));
+    }
+
     private static void run(String source) throws IOException {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
 
         Parser parser = new Parser(tokens);
-        
-        AstPrinter printer = new AstPrinter();
-        Expr exprAst = parser.parse();
-        // System.out.println(printer.print(exprAst));
+        List<Stmt> statements = parser.parse();
+        if(hadError) return;
 
-        Interpreter inter = new Interpreter();
-        Object val = inter.interpret(exprAst);
-        System.out.println(val);
-        
-        // for (Token token : tokens) {
-        //     System.out.println(token);
-        // }
+        // printAst(exprAst);
+
+        inter.interpret(statements);
     }
 
     static void error(Token token, String message) {
         if(token.type != TokenType.EOF)
             report(token.line, " at '" + token.lexeme + "'", message);
-        report(token.line, "", message);
+        else
+            report(token.line, "", message);
     }
 
     static void error(int line, String message) {
         report(line, "", message);
     }
 
+    static void runtimeError(RuntimeError err) {
+        System.err.printf("%s\n[line %d]\n", err.getMessage(), err.token.line);
+        exitCode = err.signal != null ? err.signal.getNumber() + 128 : 0;
+        hadRuntimeError = true;
+    }
+
     private static void report(int line, String where, String message) {
-        System.out.printf("%d: error: %s", line, message);
+        System.err.printf("%d: error: %s\n", line, message);
         hadError = true;
     }
 }
